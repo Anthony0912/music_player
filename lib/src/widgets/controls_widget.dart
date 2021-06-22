@@ -1,4 +1,10 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
+// ignore: import_of_legacy_library_into_null_safe
+import 'package:flutter_file_manager/flutter_file_manager.dart';
+// ignore: import_of_legacy_library_into_null_safe
+import 'package:path_provider_ex/path_provider_ex.dart';
 
 import 'package:provider/provider.dart';
 import 'package:music_player/src/models/audio_player_model.dart';
@@ -17,9 +23,11 @@ class _ControlsState extends State<Controls>
   bool firstTime = true;
   late AnimationController playAnimation;
   final assetAudioPlayer = AssetsAudioPlayer();
+  var files;
 
   @override
   void initState() {
+    getFiles();
     this.playAnimation = new AnimationController(
       vsync: this,
       duration: Duration(microseconds: 500),
@@ -36,7 +44,10 @@ class _ControlsState extends State<Controls>
   void open() {
     final audioPlayerModel =
         Provider.of<AudioPlayerModel>(context, listen: false);
-    assetAudioPlayer.open(Audio('assets/audio1.mp3'));
+    assetAudioPlayer.open(
+      Audio('assets/audio1.mp3'),
+      showNotification: true,
+    );
     assetAudioPlayer.currentPosition.listen((duration) {
       audioPlayerModel.current = duration;
     });
@@ -44,6 +55,18 @@ class _ControlsState extends State<Controls>
     assetAudioPlayer.current.listen((playingAudio) {
       audioPlayerModel.songDuration = playingAudio!.audio.duration;
     });
+  }
+
+  void getFiles() async {
+    List<StorageInfo> storageInfo = await PathProviderEx.getStorageInfo();
+    final root = storageInfo[0].rootDir;
+    final fm = FileManager(root: Directory(root));
+    files = await fm.filesTree(
+      excludedPaths: ["/storage/emulated/0/Android"],
+      extensions: ["mp3"],
+    );
+    print(files);
+    setState(() {});
   }
 
   @override
